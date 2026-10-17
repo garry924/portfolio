@@ -1,4 +1,4 @@
-name: Deploy specific folder to Pages
+name: Deploy to Pages
 
 on:
   push:
@@ -23,21 +23,39 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Find project folder
+        run: |
+          if [ -f package.json ]; then
+            echo "PROJECT_DIR=." >> $GITHUB_ENV
+          elif [ -f Girikshit-Portfolio-master/package.json ]; then
+            echo "PROJECT_DIR=Girikshit-Portfolio-master" >> $GITHUB_ENV
+          else
+            echo "Could not find package.json in repo root or Girikshit-Portfolio-master/" >&2
+            exit 1
+          fi
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+
       - name: Install dependencies
-        run: npm ci
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: npm install
+
       - name: Build
+        working-directory: ${{ env.PROJECT_DIR }}
         run: npm run build
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'
+          path: ${{ env.PROJECT_DIR == '.' && './dist' || './Girikshit-Portfolio-master/dist' }}
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
